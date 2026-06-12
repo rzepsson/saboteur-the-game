@@ -16,6 +16,6 @@ export const useLobbyStore = create<LobbyStore>()(
       setNickname: (nickname) => set({ nickname }),
       setAvatarId: (avatarId) => set({ avatarId }),
     }),
-    { name: "saboteur-lobby-prefs" }
-  )
+    { name: "saboteur-lobby-prefs" },
+  ),
 );

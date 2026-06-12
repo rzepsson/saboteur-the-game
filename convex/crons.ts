@@ -7,7 +7,7 @@ crons.interval(
   "cleanup inactive players",
   { seconds: 30 },
   internal.rooms.cleanupInactivePlayers,
-  {}
+  {},
 );
 
 export default crons;

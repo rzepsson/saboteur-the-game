@@ -58,7 +58,12 @@ export const create = mutation({
       code,
       hostSessionId: args.sessionId,
       status: "waiting",
-      settings: { maxPlayers: 10 },
+      settings: {
+        maxPlayers: 10,
+        numberOfRounds: 3,
+        turnTimeLimitSeconds: 60,
+        enableBrokenToolPenalty: false,
+      },
     });
 
     await ctx.db.insert("players", {
@@ -144,7 +149,7 @@ export const leave = mutation({
     const player = await ctx.db
       .query("players")
       .withIndex("by_roomId_and_sessionId", (q) =>
-        q.eq("roomId", args.roomId).eq("sessionId", args.sessionId)
+        q.eq("roomId", args.roomId).eq("sessionId", args.sessionId),
       )
       .unique();
 
@@ -180,7 +185,7 @@ export const heartbeat = mutation({
     const player = await ctx.db
       .query("players")
       .withIndex("by_roomId_and_sessionId", (q) =>
-        q.eq("roomId", args.roomId).eq("sessionId", args.sessionId)
+        q.eq("roomId", args.roomId).eq("sessionId", args.sessionId),
       )
       .unique();
 
@@ -190,19 +195,41 @@ export const heartbeat = mutation({
   },
 });
 
+const VALID_TURN_TIMES = new Set([30, 60, 90, 120]);
+
 export const updateSettings = mutation({
   args: {
     sessionId: v.string(),
     roomId: v.id("rooms"),
-    maxPlayers: v.number(),
+    settings: v.object({
+      maxPlayers: v.number(),
+      numberOfRounds: v.number(),
+      turnTimeLimitSeconds: v.union(v.null(), v.number()),
+      enableBrokenToolPenalty: v.boolean(),
+    }),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
     if (!room) throw new Error("ROOM_NOT_FOUND");
     if (room.hostSessionId !== args.sessionId) throw new Error("NOT_HOST");
 
-    const clamped = Math.min(10, Math.max(3, Math.round(args.maxPlayers)));
-    await ctx.db.patch(args.roomId, { settings: { maxPlayers: clamped } });
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_roomId", (q) => q.eq("roomId", args.roomId))
+      .take(11);
+
+    const s = args.settings;
+    await ctx.db.patch(args.roomId, {
+      settings: {
+        maxPlayers: Math.min(10, Math.max(Math.max(3, players.length), Math.round(s.maxPlayers))),
+        numberOfRounds: Math.min(3, Math.max(1, Math.round(s.numberOfRounds))),
+        turnTimeLimitSeconds:
+          s.turnTimeLimitSeconds === null || VALID_TURN_TIMES.has(s.turnTimeLimitSeconds)
+            ? s.turnTimeLimitSeconds
+            : 60,
+        enableBrokenToolPenalty: s.enableBrokenToolPenalty,
+      },
+    });
   },
 });
 

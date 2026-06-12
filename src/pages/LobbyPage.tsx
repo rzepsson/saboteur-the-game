@@ -25,22 +25,32 @@ type Player = {
   isHost: boolean;
 };
 
+type RoomSettings = {
+  maxPlayers: number;
+  numberOfRounds?: number;
+  turnTimeLimitSeconds?: number | null;
+  enableBrokenToolPenalty?: boolean;
+};
+
 type Room = {
   _id: Id<"rooms">;
   code: string;
   hostSessionId: string;
   status: "waiting" | "starting" | "playing";
-  settings: { maxPlayers: number };
+  settings: RoomSettings;
   players: Player[];
 };
 
-function PlayerCard({
-  player,
-  isSelf,
-}: {
-  player: Player;
-  isSelf: boolean;
-}) {
+function resolveSettings(s: RoomSettings): Required<RoomSettings> {
+  return {
+    maxPlayers: s.maxPlayers,
+    numberOfRounds: s.numberOfRounds ?? 3,
+    turnTimeLimitSeconds: s.turnTimeLimitSeconds ?? 60,
+    enableBrokenToolPenalty: s.enableBrokenToolPenalty ?? false,
+  };
+}
+
+function PlayerCard({ player, isSelf }: { player: Player; isSelf: boolean }) {
   useLocale();
   return (
     <motion.div
@@ -86,6 +96,53 @@ function PlayerCard({
   );
 }
 
+const TURN_TIME_OPTIONS: Array<number | null> = [null, 30, 60, 90, 120];
+
+function StepperRow({
+  label,
+  value,
+  min,
+  max,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  disabled: boolean;
+  onChange: (next: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[#5a360a] font-bold text-xl">{label}</span>
+      <div className="flex items-center gap-4">
+        <motion.button
+          whileHover={!disabled && value > min ? { scale: 1.15 } : {}}
+          whileTap={!disabled && value > min ? { scale: 0.9 } : {}}
+          onClick={() => !disabled && onChange(value - 1)}
+          disabled={disabled || value <= min}
+          className="w-10 h-10 flex items-center justify-center bg-[#5a360a] text-[#f0dfc0] font-bold text-2xl rounded-lg disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+        >
+          −
+        </motion.button>
+        <span className="text-[#1e0e04] font-bold text-4xl w-8 text-center tabular-nums">
+          {value}
+        </span>
+        <motion.button
+          whileHover={!disabled && value < max ? { scale: 1.15 } : {}}
+          whileTap={!disabled && value < max ? { scale: 0.9 } : {}}
+          onClick={() => !disabled && onChange(value + 1)}
+          disabled={disabled || value >= max}
+          className="w-10 h-10 flex items-center justify-center bg-[#5a360a] text-[#f0dfc0] font-bold text-2xl rounded-lg disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+        >
+          +
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
 function SettingsPanel({
   room,
   isHost,
@@ -97,13 +154,16 @@ function SettingsPanel({
 }) {
   useLocale();
   const updateSettings = useMutation(api.rooms.updateSettings);
-  const { maxPlayers } = room.settings;
+  const resolved = resolveSettings(room.settings);
+  const { maxPlayers, numberOfRounds, turnTimeLimitSeconds, enableBrokenToolPenalty } = resolved;
   const playerCount = room.players.length;
 
-  const changeMax = async (delta: number) => {
-    const next = Math.min(10, Math.max(Math.max(3, playerCount), maxPlayers + delta));
-    if (next === maxPlayers) return;
-    await updateSettings({ sessionId, roomId: room._id, maxPlayers: next });
+  const update = (partial: Partial<Required<RoomSettings>>) => {
+    void updateSettings({
+      sessionId,
+      roomId: room._id,
+      settings: { ...resolved, ...partial },
+    });
   };
 
   return (
@@ -112,40 +172,81 @@ function SettingsPanel({
         {m.lobby_settings_title()}
       </h3>
 
-      <div className="flex flex-col gap-3">
-        <label className="text-[#5a360a] font-bold text-xl">{m.lobby_max_players_label()}</label>
+      <div className="flex flex-col gap-5">
+        {/* Max players */}
+        <StepperRow
+          label={m.lobby_max_players_label()}
+          value={maxPlayers}
+          min={Math.max(3, playerCount)}
+          max={10}
+          disabled={!isHost}
+          onChange={(next) => update({ maxPlayers: next })}
+        />
 
-        <div className="flex items-center gap-4">
-          <motion.button
-            whileHover={isHost && maxPlayers > Math.max(3, playerCount) ? { scale: 1.15 } : {}}
-            whileTap={isHost && maxPlayers > Math.max(3, playerCount) ? { scale: 0.9 } : {}}
-            onClick={() => isHost && void changeMax(-1)}
-            disabled={!isHost || maxPlayers <= Math.max(3, playerCount)}
-            className="w-10 h-10 flex items-center justify-center bg-[#5a360a] text-[#f0dfc0] font-bold text-2xl rounded-lg disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-          >
-            −
-          </motion.button>
+        {/* Number of rounds */}
+        <StepperRow
+          label={m.lobby_rounds_label()}
+          value={numberOfRounds}
+          min={1}
+          max={3}
+          disabled={!isHost}
+          onChange={(next) => update({ numberOfRounds: next })}
+        />
 
-          <span className="text-[#1e0e04] font-bold text-4xl w-8 text-center tabular-nums">
-            {maxPlayers}
+        {/* Turn time limit */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[#5a360a] font-bold text-xl">{m.lobby_turn_time_label()}</span>
+          <div className="flex flex-wrap gap-2">
+            {TURN_TIME_OPTIONS.map((val) => {
+              const active = turnTimeLimitSeconds === val;
+              return (
+                <motion.button
+                  key={val ?? "inf"}
+                  whileHover={isHost && !active ? { scale: 1.08 } : {}}
+                  whileTap={isHost && !active ? { scale: 0.93 } : {}}
+                  onClick={() => isHost && update({ turnTimeLimitSeconds: val })}
+                  disabled={!isHost}
+                  className={[
+                    "px-3 py-1.5 rounded-lg font-bold text-xl border-2 transition-colors",
+                    "disabled:cursor-not-allowed",
+                    active
+                      ? "bg-[#5a360a] text-[#f0dfc0] border-[#3e2406]"
+                      : "bg-transparent text-[#5a360a] border-[#c69c6d] cursor-pointer hover:border-[#5a360a]",
+                  ].join(" ")}
+                >
+                  {val === null ? m.lobby_turn_time_unlimited() : `${val}s`}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Broken tool penalty */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[#5a360a] font-bold text-xl">
+            {m.lobby_broken_tool_penalty_label()}
           </span>
-
+          <p className="text-[#a67c52] text-base leading-snug">
+            {m.lobby_broken_tool_penalty_desc()}
+          </p>
           <motion.button
-            whileHover={isHost && maxPlayers < 10 ? { scale: 1.15 } : {}}
-            whileTap={isHost && maxPlayers < 10 ? { scale: 0.9 } : {}}
-            onClick={() => isHost && void changeMax(1)}
-            disabled={!isHost || maxPlayers >= 10}
-            className="w-10 h-10 flex items-center justify-center bg-[#5a360a] text-[#f0dfc0] font-bold text-2xl rounded-lg disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+            whileHover={isHost ? { scale: 1.04 } : {}}
+            whileTap={isHost ? { scale: 0.96 } : {}}
+            onClick={() => isHost && update({ enableBrokenToolPenalty: !enableBrokenToolPenalty })}
+            disabled={!isHost}
+            className={[
+              "self-start px-5 py-2 rounded-lg font-bold text-xl border-2 transition-colors",
+              "disabled:cursor-not-allowed",
+              enableBrokenToolPenalty
+                ? "bg-[#22c55e] text-white border-[#14532d] cursor-pointer"
+                : "bg-[#f8f0e0] text-[#5a360a] border-[#c69c6d] cursor-pointer",
+            ].join(" ")}
           >
-            +
+            {enableBrokenToolPenalty ? m.lobby_setting_on() : m.lobby_setting_off()}
           </motion.button>
         </div>
 
-        {!isHost && (
-          <p className="text-[#a67c52] text-lg italic">
-            Tylko host może zmieniać ustawienia.
-          </p>
-        )}
+        {!isHost && <p className="text-[#a67c52] text-lg italic">{m.lobby_host_only_hint()}</p>}
       </div>
     </div>
   );
@@ -336,7 +437,9 @@ export default function LobbyPage() {
                 )}
                 <motion.button
                   initial={{ y: 0, boxShadow: "0px 6px 0px #166534" }}
-                  whileHover={canStart ? { y: -2, boxShadow: "0px 8px 0px #166534", scale: 1.01 } : {}}
+                  whileHover={
+                    canStart ? { y: -2, boxShadow: "0px 8px 0px #166534", scale: 1.01 } : {}
+                  }
                   whileTap={canStart ? { y: 6, boxShadow: "0px 0px 0px #166534", scale: 0.98 } : {}}
                   disabled={!canStart}
                   className="w-full py-5 uppercase tracking-[0.15em] cursor-pointer text-white font-bold text-3xl rounded-xl bg-[#22c55e] border-4 border-[#14532d] disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"

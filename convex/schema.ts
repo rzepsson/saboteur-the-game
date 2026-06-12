@@ -5,13 +5,12 @@ export default defineSchema({
   rooms: defineTable({
     code: v.string(),
     hostSessionId: v.string(),
-    status: v.union(
-      v.literal("waiting"),
-      v.literal("starting"),
-      v.literal("playing")
-    ),
+    status: v.union(v.literal("waiting"), v.literal("starting"), v.literal("playing")),
     settings: v.object({
       maxPlayers: v.number(),
+      numberOfRounds: v.optional(v.number()),
+      turnTimeLimitSeconds: v.optional(v.union(v.null(), v.number())),
+      enableBrokenToolPenalty: v.optional(v.boolean()),
     }),
   }).index("by_code", ["code"]),
 
