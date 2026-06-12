@@ -7,14 +7,9 @@ import { m } from "../paraglide/messages.js";
 import { useLocale } from "../lib/locale.js";
 import { useLobbyStore } from "../store/lobbyStore.js";
 import { getSessionId } from "../lib/session.js";
+import { AvatarPicker } from "./game/AvatarPicker.js";
 
 type Tab = "create" | "join";
-
-const AVATARS_COUNT = 8;
-
-function getAvatarUrl(id: number): string {
-  return new URL(`/src/assets/avatars/avatar${id}.png`, import.meta.url).href;
-}
 
 function errorToMessage(err: unknown): string {
   if (err instanceof Error) {
@@ -38,14 +33,6 @@ export default function GamePanel() {
 
   const createRoom = useMutation(api.rooms.create);
   const joinRoom = useMutation(api.rooms.join);
-
-  const handlePrevAvatar = () => {
-    setAvatarId(avatarId === 1 ? AVATARS_COUNT : avatarId - 1);
-  };
-
-  const handleNextAvatar = () => {
-    setAvatarId(avatarId === AVATARS_COUNT ? 1 : avatarId + 1);
-  };
 
   const handleAction = async () => {
     setError(null);
@@ -83,9 +70,10 @@ export default function GamePanel() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="h-full bg-[#ede0c0] border-4 border-[#5a360a] flex flex-col overflow-hidden rounded-xl shadow-[8px_8px_0px_rgba(0,0,0,0.6)] font-game"
+      className="flex flex-col lg:h-full bg-[#ede0c0] border-4 border-[#5a360a] rounded-xl shadow-[8px_8px_0px_rgba(0,0,0,0.6)] font-game overflow-hidden"
     >
-      <div className="flex bg-[#3e2406]">
+      {/* Tab bar */}
+      <div className="flex bg-[#3e2406] shrink-0">
         {(["create", "join"] as Tab[]).map((t) => (
           <button
             key={t}
@@ -93,52 +81,23 @@ export default function GamePanel() {
               setTab(t);
               setError(null);
             }}
-            className={`flex-1 py-5 uppercase tracking-[0.15em] transition-all cursor-pointer relative text-2xl font-bold border-t-4 ${
+            className={[
+              "flex-1 py-4 sm:py-5 uppercase tracking-[0.15em] transition-all cursor-pointer",
+              "relative text-xl sm:text-2xl font-bold border-t-4",
               tab === t
                 ? "text-[#5a360a] bg-[#ede0c0] border-[#ede0c0]"
-                : "text-[#a67c52] bg-[#5a360a] border-transparent hover:bg-[#704612] hover:text-[#e0c4a4]"
-            }`}
+                : "text-[#a67c52] bg-[#5a360a] border-transparent hover:bg-[#704612] hover:text-[#e0c4a4]",
+            ].join(" ")}
           >
             {t === "create" ? m.panel_create_tab() : m.panel_join_tab()}
           </button>
         ))}
       </div>
 
-      <div className="flex flex-col gap-6 p-8 flex-1 min-h-0">
-        <div className="flex flex-row gap-5 items-stretch mt-2">
-          <div className="flex items-center gap-3">
-            <motion.button
-              whileHover={{ scale: 1.2, x: -2 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handlePrevAvatar}
-              className="text-[#5a360a] hover:text-[#22c55e] text-5xl transition-colors cursor-pointer select-none"
-            >
-              {"<"}
-            </motion.button>
-            <div className="w-24 h-24 flex items-center justify-center bg-[#c69c6d] border-4 border-[#5a360a] rounded-lg shadow-[inset_0_4px_0_rgba(0,0,0,0.15)] shrink-0 overflow-hidden">
-              <AnimatePresence mode="popLayout">
-                <motion.img
-                  key={avatarId}
-                  initial={{ opacity: 0, scale: 0.5, rotate: -15 }}
-                  animate={{ opacity: 1, scale: 1.15, rotate: 0 }}
-                  exit={{ opacity: 0, scale: 0.5, rotate: 15 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  src={getAvatarUrl(avatarId)}
-                  alt={`Avatar ${avatarId}`}
-                  className="w-full h-full object-cover"
-                  style={{ imageRendering: "pixelated" }}
-                />
-              </AnimatePresence>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.2, x: 2 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handleNextAvatar}
-              className="text-[#5a360a] hover:text-[#22c55e] text-5xl transition-colors cursor-pointer select-none"
-            >
-              {">"}
-            </motion.button>
-          </div>
+      {/* Content */}
+      <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 lg:p-8 lg:flex-1 lg:min-h-0">
+        <div className="flex flex-row gap-3 sm:gap-5 items-center mt-1">
+          <AvatarPicker avatarId={avatarId} onChange={setAvatarId} />
 
           <input
             type="text"
@@ -152,7 +111,7 @@ export default function GamePanel() {
             }}
             placeholder={m.panel_nickname_placeholder()}
             maxLength={20}
-            className="flex-1 px-6 py-4 bg-[#f8f0e0] border-4 border-[#5a360a] text-[#1e0e04] placeholder-[#a67c52] font-bold focus:outline-none focus:border-[#22c55e] transition-colors rounded-lg text-3xl shadow-[inset_0_4px_0_rgba(0,0,0,0.05)] w-full"
+            className="flex-1 px-4 sm:px-6 py-3 sm:py-4 bg-[#f8f0e0] border-4 border-[#5a360a] text-[#1e0e04] placeholder-[#a67c52] font-bold focus:outline-none focus:border-[#22c55e] transition-colors rounded-lg text-2xl sm:text-3xl shadow-[inset_0_4px_0_rgba(0,0,0,0.05)] w-full"
           />
         </div>
 
@@ -177,7 +136,7 @@ export default function GamePanel() {
                 }}
                 placeholder={m.panel_room_code_placeholder()}
                 maxLength={6}
-                className="w-full mt-2 px-4 py-5 bg-[#2b1604] border-4 border-[#5a360a] text-[#fff2d4] placeholder-[#5a360a] tracking-[0.4em] text-center uppercase font-bold focus:outline-none focus:border-[#22c55e] transition-colors rounded-lg text-4xl shadow-[inset_0_4px_0_rgba(0,0,0,0.5)]"
+                className="w-full px-4 py-4 sm:py-5 bg-[#2b1604] border-4 border-[#5a360a] text-[#fff2d4] placeholder-[#5a360a] tracking-[0.4em] text-center uppercase font-bold focus:outline-none focus:border-[#22c55e] transition-colors rounded-lg text-3xl sm:text-4xl shadow-[inset_0_4px_0_rgba(0,0,0,0.5)]"
               />
             </motion.div>
           )}
@@ -190,7 +149,7 @@ export default function GamePanel() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="text-center text-red-700 text-2xl font-bold bg-red-100 border-2 border-red-400 rounded-lg px-4 py-2"
+              className="text-center text-red-700 text-xl sm:text-2xl font-bold bg-red-100 border-2 border-red-400 rounded-lg px-4 py-2"
             >
               {error}
             </motion.p>
@@ -203,7 +162,7 @@ export default function GamePanel() {
           whileTap={loading ? {} : { y: 6, boxShadow: "0px 0px 0px #166534", scale: 0.98 }}
           onClick={() => void handleAction()}
           disabled={loading}
-          className="w-full mt-auto py-6 uppercase tracking-[0.15em] cursor-pointer text-white font-bold text-3xl rounded-xl bg-[#22c55e] border-4 border-[#14532d] disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full mt-2 lg:mt-auto py-5 sm:py-6 uppercase tracking-[0.15em] cursor-pointer text-white font-bold text-2xl sm:text-3xl rounded-xl bg-[#22c55e] border-4 border-[#14532d] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {tab === "create" ? m.panel_create_button() : m.panel_join_button()}
         </motion.button>
