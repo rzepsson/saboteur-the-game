@@ -21,7 +21,7 @@ export function PlayerCard({ player, isSelf }: PlayerCardProps) {
       className="flex items-center gap-4 bg-[#f8f0e0] border-2 border-[#c69c6d] rounded-xl px-4 py-3 shadow-[3px_3px_0px_rgba(0,0,0,0.15)]"
     >
       <div className="relative shrink-0">
-        <div className="w-14 h-14 bg-[#c69c6d] border-2 border-[#5a360a] rounded-lg overflow-hidden">
+        <div className={`w-14 h-14 ${player.isHost ? 'bg-[#ffd700] border-[#b8860b]' : 'bg-[#c69c6d]'} border-2 border-[#5a360a] rounded-lg overflow-hidden`}>
           <img
             src={getAvatarUrl(player.avatarId)}
             alt={player.nickname}
@@ -29,9 +29,6 @@ export function PlayerCard({ player, isSelf }: PlayerCardProps) {
             style={{ imageRendering: "pixelated" }}
           />
         </div>
-        {player.isHost && (
-          <span className="absolute -top-2 -right-2 text-base leading-none">👑</span>
-        )}
       </div>
 
       <div className="flex-1 min-w-0">
