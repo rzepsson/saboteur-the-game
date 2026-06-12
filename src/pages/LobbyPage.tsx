@@ -50,7 +50,7 @@ export default function LobbyPage() {
   if (room === undefined) {
     return (
       <div className="relative h-svh flex items-center justify-center font-game text-[#f0dfc0]">
-        <AnimatedBackground />
+        <AnimatedBackground variant="cave" />
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -66,7 +66,7 @@ export default function LobbyPage() {
   if (room === null) {
     return (
       <div className="relative h-svh flex flex-col items-center justify-center gap-8 font-game text-[#f0dfc0] px-4">
-        <AnimatedBackground />
+        <AnimatedBackground variant="cave" />
         <div className="relative z-10 text-center flex flex-col items-center gap-6">
           <p className="text-4xl sm:text-5xl font-bold">{m.lobby_not_found_title()}</p>
           <Link

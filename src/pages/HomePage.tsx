@@ -11,7 +11,7 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-svh lg:h-svh flex flex-col items-center justify-between px-3 sm:px-4 pt-6 sm:pt-8 pb-4 sm:pb-6 gap-4 sm:gap-6 lg:overflow-hidden">
-      <AnimatedBackground />
+      <AnimatedBackground variant="cave" />
 
       <motion.div
         initial={{ opacity: 0, y: -20 }}
