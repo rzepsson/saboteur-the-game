@@ -1,0 +1,21 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "game_title": "Sabotażysta",
+  "game_subtitle": "Górnicy vs Sabotażyści",
+  "panel_create_tab": "Stwórz",
+  "panel_join_tab": "Dołącz",
+  "panel_choose_avatar": "Wybierz kolor",
+  "panel_nickname_placeholder": "Imię górnika...",
+  "panel_room_code_placeholder": "Kod pokoju",
+  "panel_create_button": "Otwórz kopalnię",
+  "panel_join_button": "Wejdź do kopalni",
+  "how_to_play_title": "Jak grać",
+  "tip_step_prefix": "Krok",
+  "tip_1_title": "Ciągnij kartę roli",
+  "tip_1_desc": "Każdy gracz tajnie ciągnie kartę — Górnik lub Sabotażysta. Nikt nie wie, kim jesteś.",
+  "tip_2_title": "Kopaj tunel",
+  "tip_2_desc": "Górnicy kładą karty tuneli prowadzące do złota. Sabotażyści blokują ścieżki i psują narzędzia.",
+  "tip_3_title": "Znajdź zdrajcę",
+  "tip_3_desc": "Na koniec rundy zagłosujcie na podejrzanego. Jeden błędny głos i sabotażyści wygrywają.",
+  "footer_rights": "Wszelkie prawa zastrzeżone"
+}

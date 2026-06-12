@@ -1,0 +1,21 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "game_title": "Saboteur",
+  "game_subtitle": "Miners vs Saboteurs",
+  "panel_create_tab": "Create",
+  "panel_join_tab": "Join",
+  "panel_choose_avatar": "Pick your color",
+  "panel_nickname_placeholder": "Miner name...",
+  "panel_room_code_placeholder": "Room code",
+  "panel_create_button": "Open the mine",
+  "panel_join_button": "Enter the mine",
+  "how_to_play_title": "How to play",
+  "tip_step_prefix": "Step",
+  "tip_1_title": "Draw your role",
+  "tip_1_desc": "Each player secretly draws a card — Miner or Saboteur. No one else knows who's who.",
+  "tip_2_title": "Dig the tunnel",
+  "tip_2_desc": "Miners play tunnel cards to reach the gold. Saboteurs secretly block paths and break tools.",
+  "tip_3_title": "Find the traitor",
+  "tip_3_desc": "At round end, vote out who you suspect. One wrong vote and the saboteurs win.",
+  "footer_rights": "All rights reserved"
+}
