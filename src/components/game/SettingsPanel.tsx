@@ -7,7 +7,7 @@ import { useLocale } from "../../lib/locale.js";
 import { resolveSettings } from "../../types/game.js";
 import type { Room, RoomSettings } from "../../types/game.js";
 
-const TURN_TIME_OPTIONS: Array<number | null> = [null, 30, 60, 90, 120];
+const TURN_TIME_OPTIONS: number[] = [30, 60, 90, 120];
 
 interface SettingsPanelProps {
   room: Room;
@@ -31,12 +31,14 @@ export function SettingsPanel({ room, isHost, sessionId }: SettingsPanelProps) {
   };
 
   return (
-    <div className="bg-[#f8f0e0] border-2 border-[#c69c6d] rounded-xl p-4 sm:p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.15)]">
-      <h3 className="text-[#5a360a] font-bold text-xl sm:text-2xl uppercase tracking-wider mb-4 border-b-2 border-[#c69c6d] pb-2">
-        {m.lobby_settings_title()}
-      </h3>
+    <div className="bg-[#f8f0e0] border-2 border-[#c69c6d] rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.15)] lg:flex lg:flex-col lg:flex-1 lg:min-h-0">
+      <div className="px-4 sm:px-5 pt-4 sm:pt-5 shrink-0">
+        <h3 className="text-[#5a360a] font-bold text-xl sm:text-2xl uppercase tracking-wider border-b-2 border-[#c69c6d] pb-2">
+          {m.lobby_settings_title()}
+        </h3>
+      </div>
 
-      <div className="flex flex-col gap-4 sm:gap-5">
+      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-4 flex flex-col gap-4 sm:gap-5 lg:overflow-y-auto lg:custom-scroll">
         <StepperRow
           label={m.lobby_max_players_label()}
           value={maxPlayers}
@@ -62,7 +64,7 @@ export function SettingsPanel({ room, isHost, sessionId }: SettingsPanelProps) {
               const active = turnTimeLimitSeconds === val;
               return (
                 <motion.button
-                  key={val ?? "inf"}
+                  key={val}
                   whileHover={isHost && !active ? { scale: 1.08 } : {}}
                   whileTap={isHost && !active ? { scale: 0.93 } : {}}
                   onClick={() => isHost && update({ turnTimeLimitSeconds: val })}
@@ -75,7 +77,7 @@ export function SettingsPanel({ room, isHost, sessionId }: SettingsPanelProps) {
                       : "bg-transparent text-[#5a360a] border-[#c69c6d] cursor-pointer hover:border-[#5a360a]",
                   ].join(" ")}
                 >
-                  {val === null ? m.lobby_turn_time_unlimited() : `${val}s`}
+                  {`${val}s`}
                 </motion.button>
               );
             })}

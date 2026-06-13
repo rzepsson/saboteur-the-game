@@ -9,7 +9,7 @@ export default defineSchema({
     settings: v.object({
       maxPlayers: v.number(),
       numberOfRounds: v.optional(v.number()),
-      turnTimeLimitSeconds: v.optional(v.union(v.null(), v.number())),
+      turnTimeLimitSeconds: v.optional(v.number()),
       enableBrokenToolPenalty: v.optional(v.boolean()),
     }),
   }).index("by_code", ["code"]),

@@ -11,7 +11,7 @@ export type Player = {
 export type RoomSettings = {
   maxPlayers: number;
   numberOfRounds?: number;
-  turnTimeLimitSeconds?: number | null;
+  turnTimeLimitSeconds?: number;
   enableBrokenToolPenalty?: boolean;
 };
 

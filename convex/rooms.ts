@@ -204,7 +204,7 @@ export const updateSettings = mutation({
     settings: v.object({
       maxPlayers: v.number(),
       numberOfRounds: v.number(),
-      turnTimeLimitSeconds: v.union(v.null(), v.number()),
+      turnTimeLimitSeconds: v.number(),
       enableBrokenToolPenalty: v.boolean(),
     }),
   },
@@ -223,10 +223,9 @@ export const updateSettings = mutation({
       settings: {
         maxPlayers: Math.min(10, Math.max(Math.max(3, players.length), Math.round(s.maxPlayers))),
         numberOfRounds: Math.min(3, Math.max(1, Math.round(s.numberOfRounds))),
-        turnTimeLimitSeconds:
-          s.turnTimeLimitSeconds === null || VALID_TURN_TIMES.has(s.turnTimeLimitSeconds)
-            ? s.turnTimeLimitSeconds
-            : 60,
+        turnTimeLimitSeconds: VALID_TURN_TIMES.has(s.turnTimeLimitSeconds)
+          ? s.turnTimeLimitSeconds
+          : 60,
         enableBrokenToolPenalty: s.enableBrokenToolPenalty,
       },
     });

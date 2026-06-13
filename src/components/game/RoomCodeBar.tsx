@@ -32,7 +32,7 @@ export function RoomCodeBar({ code }: RoomCodeBarProps) {
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <p className="text-[#a67c52] font-bold text-lg sm:text-xl uppercase tracking-widest">
+      <p className="text-[#f0dfc0] font-bold text-lg sm:text-xl uppercase tracking-widest [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
         {m.lobby_code_label()}
       </p>
       <div className="flex items-center gap-2 sm:gap-3">
@@ -62,7 +62,9 @@ export function RoomCodeBar({ code }: RoomCodeBarProps) {
           </AnimatePresence>
         </motion.button>
       </div>
-      <p className="text-[#a67c52] text-base sm:text-lg">{m.lobby_share_hint()}</p>
+      <p className="text-[#e0c4a4] text-base sm:text-lg [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
+        {m.lobby_share_hint()}
+      </p>
     </div>
   );
 }

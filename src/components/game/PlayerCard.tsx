@@ -21,7 +21,9 @@ export function PlayerCard({ player, isSelf }: PlayerCardProps) {
       className="flex items-center gap-4 bg-[#f8f0e0] border-2 border-[#c69c6d] rounded-xl px-4 py-3 shadow-[3px_3px_0px_rgba(0,0,0,0.15)]"
     >
       <div className="relative shrink-0">
-        <div className={`w-14 h-14 ${player.isHost ? 'bg-[#ffd700] border-[#b8860b]' : 'bg-[#c69c6d]'} border-2 border-[#5a360a] rounded-lg overflow-hidden`}>
+        <div
+          className={`w-14 h-14 ${player.isHost ? "bg-[#ffd700] border-[#b8860b]" : "bg-[#c69c6d]"} border-2 border-[#5a360a] rounded-lg overflow-hidden`}
+        >
           <img
             src={getAvatarUrl(player.avatarId)}
             alt={player.nickname}

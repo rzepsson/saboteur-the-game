@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../../convex/_generated/api.js";
-import AnimatedBackground from "../components/AnimatedBackground.js";
 import { PlayerCard } from "../components/game/PlayerCard.js";
 import { RoomCodeBar } from "../components/game/RoomCodeBar.js";
 import { SettingsPanel } from "../components/game/SettingsPanel.js";
@@ -50,7 +49,6 @@ export default function LobbyPage() {
   if (room === undefined) {
     return (
       <div className="relative h-svh flex items-center justify-center font-game text-[#f0dfc0]">
-        <AnimatedBackground variant="cave" />
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -66,9 +64,8 @@ export default function LobbyPage() {
   if (room === null) {
     return (
       <div className="relative h-svh flex flex-col items-center justify-center gap-8 font-game text-[#f0dfc0] px-4">
-        <AnimatedBackground variant="cave" />
         <div className="relative z-10 text-center flex flex-col items-center gap-6">
-          <p className="text-4xl sm:text-5xl font-bold">{m.lobby_not_found_title()}</p>
+          <p className="text-4xl sm:text-5xl font-game font-bold">{m.lobby_not_found_title()}</p>
           <Link
             to="/"
             className="px-8 py-4 bg-[#22c55e] text-white font-bold text-xl sm:text-2xl rounded-xl border-4 border-[#14532d] shadow-[0px_6px_0px_#166534] hover:shadow-[0px_4px_0px_#166534] hover:translate-y-0.5 transition-all uppercase tracking-widest"
@@ -82,8 +79,6 @@ export default function LobbyPage() {
 
   return (
     <div className="relative h-svh flex flex-col items-center px-3 sm:px-4 pt-4 sm:pt-6 pb-4 sm:pb-5 gap-3 sm:gap-5 overflow-hidden font-game">
-      <AnimatedBackground />
-
       {/* Room code */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}
@@ -132,8 +127,8 @@ export default function LobbyPage() {
 
         {/* Right column: settings + action buttons */}
         <div className="flex flex-col gap-3 sm:gap-4 lg:flex-1 lg:min-h-0">
-          {/* Settings — on desktop inner-scrollable */}
-          <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:custom-scroll">
+          {/* Settings — on desktop inner-scrollable (scroll is inside the card itself) */}
+          <div className="lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
             <SettingsPanel room={room} isHost={isHost} sessionId={sessionId} />
           </div>
 
@@ -142,7 +137,7 @@ export default function LobbyPage() {
             {isHost ? (
               <>
                 {!canStart && (
-                  <p className="text-center text-[#a67c52] font-bold text-lg sm:text-xl">
+                  <p className="text-center text-[#f0dfc0] font-bold text-lg sm:text-xl [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
                     {m.lobby_min_players_hint()}
                   </p>
                 )}
@@ -168,7 +163,7 @@ export default function LobbyPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => void handleLeave()}
-              className="w-full py-3 uppercase tracking-[0.15em] cursor-pointer text-[#5a360a] font-bold text-xl sm:text-2xl rounded-xl bg-transparent border-4 border-[#5a360a] hover:bg-[#5a360a] hover:text-[#f0dfc0] transition-colors"
+              className="w-full py-3 uppercase tracking-[0.15em] cursor-pointer text-[#5a360a] font-bold text-xl sm:text-2xl rounded-xl bg-[#f8f0e0] border-4 border-[#5a360a] hover:bg-[#5a360a] hover:text-[#f0dfc0] transition-colors"
             >
               {m.lobby_leave_button()}
             </motion.button>
