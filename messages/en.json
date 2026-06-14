@@ -20,8 +20,8 @@
   "tip_1_desc": "Each player secretly draws a card — Miner or Saboteur. No one else knows who's who.",
   "tip_2_title": "Dig the tunnel",
   "tip_2_desc": "Miners play tunnel cards to reach the gold. Saboteurs secretly block paths and break tools.",
-  "tip_3_title": "Find the traitor",
-  "tip_3_desc": "At round end, vote out who you suspect. One wrong vote and the saboteurs win.",
+  "tip_3_title": "Reveal the roles",
+  "tip_3_desc": "At round end, all roles are revealed. Miners share the gold if the tunnel reached the treasure — saboteurs win if it didn't.",
   "footer_rights": "All rights reserved",
   "lobby_code_label": "Room code",
   "lobby_copy": "Copy",
@@ -32,7 +32,6 @@
   "lobby_max_players_label": "Max players",
   "lobby_rounds_label": "Number of rounds",
   "lobby_turn_time_label": "Turn time limit",
-  "lobby_turn_time_unlimited": "∞",
   "lobby_broken_tool_penalty_label": "Broken tool penalty",
   "lobby_broken_tool_penalty_desc": "A miner with a broken tool receives no gold, even if their team wins",
   "lobby_host_only_hint": "Only the host can change settings.",
@@ -49,5 +48,9 @@
   "lobby_loading": "Loading...",
   "lobby_disconnected": "You left this room",
   "lobby_kick": "Kick",
-  "lobby_make_host": "Make host"
+  "lobby_make_host": "Make host",
+  "lobby_confirm_action": "Confirm?",
+  "panel_error_generic": "An unexpected error occurred. Please try again.",
+  "not_found_title": "Page not found",
+  "not_found_back": "Back to home"
 }

@@ -1,10 +1,14 @@
 import { internalMutation, mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
 const CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const HEARTBEAT_TIMEOUT_MS = 45_000;
+const MAX_NICKNAME_LENGTH = 20;
+const MIN_AVATAR_ID = 1;
+const MAX_AVATAR_ID = 8;
 
 function generateCode(): string {
   let code = "";
@@ -12,6 +16,15 @@ function generateCode(): string {
     code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
   }
   return code;
+}
+
+function sanitizeNickname(raw: string, fallback = "Górnik"): string {
+  const trimmed = raw.trim().slice(0, MAX_NICKNAME_LENGTH);
+  return trimmed || fallback;
+}
+
+function sanitizeAvatarId(id: number): number {
+  return Math.min(MAX_AVATAR_ID, Math.max(MIN_AVATAR_ID, Math.round(id)));
 }
 
 async function cleanRoomIfEmpty(ctx: MutationCtx, roomId: Id<"rooms">) {
@@ -31,7 +44,9 @@ export const create = mutation({
     avatarId: v.number(),
   },
   handler: async (ctx, args) => {
-    // Leave any existing room before creating a new one
+    const nickname = sanitizeNickname(args.nickname);
+    const avatarId = sanitizeAvatarId(args.avatarId);
+
     const existingPlayer = await ctx.db
       .query("players")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
@@ -43,7 +58,6 @@ export const create = mutation({
       await cleanRoomIfEmpty(ctx, oldRoomId);
     }
 
-    // Ensure code is unique
     let code = generateCode();
     while (
       (await ctx.db
@@ -69,8 +83,8 @@ export const create = mutation({
     await ctx.db.insert("players", {
       roomId,
       sessionId: args.sessionId,
-      nickname: args.nickname.trim() || "Górnik",
-      avatarId: args.avatarId,
+      nickname,
+      avatarId,
       isHost: true,
       lastHeartbeat: Date.now(),
     });
@@ -88,6 +102,8 @@ export const join = mutation({
   },
   handler: async (ctx, args) => {
     const normalizedCode = args.code.trim().toUpperCase();
+    const nickname = sanitizeNickname(args.nickname);
+    const avatarId = sanitizeAvatarId(args.avatarId);
 
     const room = await ctx.db
       .query("rooms")
@@ -102,12 +118,11 @@ export const join = mutation({
       .withIndex("by_roomId", (q) => q.eq("roomId", room._id))
       .take(11);
 
-    // Already in this room — refresh info
     const alreadyIn = players.find((p) => p.sessionId === args.sessionId);
     if (alreadyIn) {
       await ctx.db.patch(alreadyIn._id, {
-        nickname: args.nickname.trim() || alreadyIn.nickname,
-        avatarId: args.avatarId,
+        nickname,
+        avatarId,
         lastHeartbeat: Date.now(),
       });
       return { code: room.code };
@@ -115,7 +130,6 @@ export const join = mutation({
 
     if (players.length >= room.settings.maxPlayers) throw new Error("ROOM_FULL");
 
-    // Leave any other room first
     const existingPlayer = await ctx.db
       .query("players")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
@@ -130,8 +144,8 @@ export const join = mutation({
     await ctx.db.insert("players", {
       roomId: room._id,
       sessionId: args.sessionId,
-      nickname: args.nickname.trim() || "Górnik",
-      avatarId: args.avatarId,
+      nickname,
+      avatarId,
       isHost: false,
       lastHeartbeat: Date.now(),
     });
@@ -232,6 +246,7 @@ export const updateSettings = mutation({
   },
 });
 
+// C1 fix: never expose sessionId or hostSessionId to clients
 export const get = query({
   args: { code: v.string() },
   handler: async (ctx, args) => {
@@ -247,29 +262,55 @@ export const get = query({
       .withIndex("by_roomId", (q) => q.eq("roomId", room._id))
       .take(10);
 
-    return { ...room, players };
+    return {
+      _id: room._id,
+      _creationTime: room._creationTime,
+      code: room.code,
+      status: room.status,
+      settings: room.settings,
+      // sessionId stripped — it is the auth token and must never be broadcast
+      players: players.map(({ sessionId: _s, ...rest }) => rest),
+    };
   },
 });
 
+// Returns only the caller's own identity — sessionId is never visible to other clients
+export const getMyPlayer = query({
+  args: { code: v.string(), sessionId: v.string() },
+  handler: async (ctx, args) => {
+    const room = await ctx.db
+      .query("rooms")
+      .withIndex("by_code", (q) => q.eq("code", args.code))
+      .unique();
+
+    if (!room) return null;
+
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_roomId_and_sessionId", (q) =>
+        q.eq("roomId", room._id).eq("sessionId", args.sessionId),
+      )
+      .unique();
+
+    if (!player) return null;
+    return { _id: player._id, isHost: player.isHost };
+  },
+});
+
+// C1 fix: target identified by playerId (document id) not sessionId
 export const kickPlayer = mutation({
   args: {
     sessionId: v.string(),
     roomId: v.id("rooms"),
-    targetSessionId: v.string(),
+    targetPlayerId: v.id("players"),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
     if (!room) throw new Error("ROOM_NOT_FOUND");
     if (room.hostSessionId !== args.sessionId) throw new Error("NOT_HOST");
 
-    const player = await ctx.db
-      .query("players")
-      .withIndex("by_roomId_and_sessionId", (q) =>
-        q.eq("roomId", args.roomId).eq("sessionId", args.targetSessionId),
-      )
-      .unique();
-
-    if (!player || player.isHost) return;
+    const player = await ctx.db.get(args.targetPlayerId);
+    if (!player || player.roomId !== args.roomId || player.isHost) return;
     await ctx.db.delete(player._id);
   },
 });
@@ -278,13 +319,16 @@ export const transferHost = mutation({
   args: {
     sessionId: v.string(),
     roomId: v.id("rooms"),
-    targetSessionId: v.string(),
+    targetPlayerId: v.id("players"),
   },
   handler: async (ctx, args) => {
-    if (args.targetSessionId === args.sessionId) throw new Error("CANNOT_TRANSFER_TO_SELF");
     const room = await ctx.db.get(args.roomId);
     if (!room) throw new Error("ROOM_NOT_FOUND");
     if (room.hostSessionId !== args.sessionId) throw new Error("NOT_HOST");
+
+    const target = await ctx.db.get(args.targetPlayerId);
+    if (!target || target.roomId !== args.roomId) throw new Error("PLAYER_NOT_FOUND");
+    if (target.sessionId === args.sessionId) throw new Error("CANNOT_TRANSFER_TO_SELF");
 
     const currentHost = await ctx.db
       .query("players")
@@ -297,17 +341,8 @@ export const transferHost = mutation({
       await ctx.db.patch(currentHost._id, { isHost: false });
     }
 
-    const target = await ctx.db
-      .query("players")
-      .withIndex("by_roomId_and_sessionId", (q) =>
-        q.eq("roomId", args.roomId).eq("sessionId", args.targetSessionId),
-      )
-      .unique();
-
-    if (!target) throw new Error("PLAYER_NOT_FOUND");
-
     await ctx.db.patch(target._id, { isHost: true });
-    await ctx.db.patch(args.roomId, { hostSessionId: args.targetSessionId });
+    await ctx.db.patch(args.roomId, { hostSessionId: target.sessionId });
   },
 });
 
@@ -337,15 +372,17 @@ export const cleanupInactivePlayers = internalMutation({
         const room = await ctx.db.get(roomId);
         if (room) await ctx.db.delete(roomId);
       } else {
-        // Ensure a host is assigned after stale player removal
         const hasHost = remaining.some((p) => p.isHost);
         if (!hasHost) {
           await ctx.db.patch(remaining[0]._id, { isHost: true });
-          await ctx.db.patch(roomId, {
-            hostSessionId: remaining[0].sessionId,
-          });
+          await ctx.db.patch(roomId, { hostSessionId: remaining[0].sessionId });
         }
       }
+    }
+
+    // H2 fix: if batch was full there may be more stale players — schedule continuation
+    if (stalePlayers.length === 50) {
+      await ctx.scheduler.runAfter(0, internal.rooms.cleanupInactivePlayers, {});
     }
   },
 });

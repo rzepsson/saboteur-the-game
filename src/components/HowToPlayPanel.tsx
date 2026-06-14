@@ -1,19 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { m } from "../paraglide/messages.js";
-import { useLocale } from "../lib/locale.js";
+import { useTranslation } from "../lib/locale.js";
 
 type TipDef = {
   titleFn: () => string;
   descFn: () => string;
   step: number;
 };
-
-const TIPS: TipDef[] = [
-  { titleFn: () => m.tip_1_title(), descFn: () => m.tip_1_desc(), step: 1 },
-  { titleFn: () => m.tip_2_title(), descFn: () => m.tip_2_desc(), step: 2 },
-  { titleFn: () => m.tip_3_title(), descFn: () => m.tip_3_desc(), step: 3 },
-];
 
 const PixelChevronLeft = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -28,8 +21,16 @@ const PixelChevronRight = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export default function HowToPlayPanel() {
-  useLocale();
+  const m = useTranslation();
   const [current, setCurrent] = useState(0);
+
+  // TIPS lives inside the component so lambdas close over the reactive `m` from useTranslation
+  const TIPS: TipDef[] = [
+    { titleFn: () => m.tip_1_title(), descFn: () => m.tip_1_desc(), step: 1 },
+    { titleFn: () => m.tip_2_title(), descFn: () => m.tip_2_desc(), step: 2 },
+    { titleFn: () => m.tip_3_title(), descFn: () => m.tip_3_desc(), step: 3 },
+  ];
+
   const tip = TIPS[current];
 
   /* Reset auto-advance timer whenever user manually navigates */

@@ -20,8 +20,8 @@
   "tip_1_desc": "Każdy gracz tajnie ciągnie kartę - Górnik lub Sabotażysta. Nikt nie wie, kim jesteś.",
   "tip_2_title": "Kop tunel",
   "tip_2_desc": "Górnicy kładą karty tuneli prowadzące do złota. Sabotażyści blokują ścieżki i psują narzędzia.",
-  "tip_3_title": "Znajdź zdrajcę",
-  "tip_3_desc": "Na koniec rundy zagłosujcie na podejrzanego. Jeden błędny głos i sabotażyści wygrywają.",
+  "tip_3_title": "Odkryj karty ról",
+  "tip_3_desc": "Na koniec rundy wszyscy odkrywają swoje karty. Górnicy dzielą złoto jeśli tunel dotarł do skarbu — sabotażyści wygrywają jeśli im to uniemożliwili.",
   "footer_rights": "Wszelkie prawa zastrzeżone",
   "lobby_code_label": "Kod pokoju",
   "lobby_copy": "Kopiuj",
@@ -32,7 +32,6 @@
   "lobby_max_players_label": "Maks. graczy",
   "lobby_rounds_label": "Liczba rund",
   "lobby_turn_time_label": "Limit czasu tury",
-  "lobby_turn_time_unlimited": "∞",
   "lobby_broken_tool_penalty_label": "Kara za psute narzędzia",
   "lobby_broken_tool_penalty_desc": "Kopacz z zepsutym narzędziem nie dostaje złota, nawet gdy jego drużyna wygra",
   "lobby_host_only_hint": "Tylko host może zmieniać ustawienia.",
@@ -49,5 +48,9 @@
   "lobby_loading": "Ładowanie...",
   "lobby_disconnected": "Opuściłeś ten pokój",
   "lobby_kick": "Wyrzuć",
-  "lobby_make_host": "Daj hosta"
+  "lobby_make_host": "Daj hosta",
+  "lobby_confirm_action": "Potwierdź?",
+  "panel_error_generic": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+  "not_found_title": "Strona nie istnieje",
+  "not_found_back": "Wróć do strony głównej"
 }

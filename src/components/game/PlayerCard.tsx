@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { m } from "../../paraglide/messages.js";
-import { useLocale } from "../../lib/locale.js";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "../../lib/locale.js";
 import { getAvatarUrl } from "../../lib/avatar.js";
 import type { Player } from "../../types/game.js";
 import bookmarkSrc from "../../assets/icons/Bookmark.svg";
@@ -15,25 +14,47 @@ interface PlayerCardProps {
 }
 
 export function PlayerCard({ player, isSelf, onKick, onTransferHost }: PlayerCardProps) {
-  useLocale();
-  const [kickPending, setKickPending] = useState(false);
-  const [hostPending, setHostPending] = useState(false);
+  const m = useTranslation();
+
+  // M5: click-to-confirm pattern — first click arms the action, second executes it.
+  // M1: removed duplicate kickPending/hostPending state; LobbyPage already guards the callbacks.
+  const [kickConfirm, setKickConfirm] = useState(false);
+  const [hostConfirm, setHostConfirm] = useState(false);
+
+  // Auto-cancel confirmation after 3 s if user doesn't follow through
+  useEffect(() => {
+    if (!kickConfirm) return;
+    const id = setTimeout(() => setKickConfirm(false), 3000);
+    return () => clearTimeout(id);
+  }, [kickConfirm]);
+
+  useEffect(() => {
+    if (!hostConfirm) return;
+    const id = setTimeout(() => setHostConfirm(false), 3000);
+    return () => clearTimeout(id);
+  }, [hostConfirm]);
+
+  const handleKickClick = () => {
+    if (!onKick) return;
+    if (kickConfirm) {
+      setKickConfirm(false);
+      onKick();
+    } else {
+      setKickConfirm(true);
+    }
+  };
+
+  const handleHostClick = () => {
+    if (!onTransferHost) return;
+    if (hostConfirm) {
+      setHostConfirm(false);
+      onTransferHost();
+    } else {
+      setHostConfirm(true);
+    }
+  };
+
   const showActions = !isSelf && (onKick ?? onTransferHost);
-
-  const handleKick = () => {
-    if (kickPending || !onKick) return;
-    setKickPending(true);
-    onKick();
-    // Safety reset — card unmounts on success, this fires only if mutation fails
-    setTimeout(() => setKickPending(false), 3000);
-  };
-
-  const handleTransferHost = () => {
-    if (hostPending || !onTransferHost) return;
-    setHostPending(true);
-    onTransferHost();
-    setTimeout(() => setHostPending(false), 3000);
-  };
 
   return (
     <motion.div
@@ -79,40 +100,88 @@ export function PlayerCard({ player, isSelf, onKick, onTransferHost }: PlayerCar
         <div className="flex flex-col gap-2 shrink-0">
           {onTransferHost && (
             <motion.button
-              whileHover={!hostPending ? { scale: 1.12, y: -1 } : {}}
-              whileTap={!hostPending ? { scale: 0.88 } : {}}
-              onClick={handleTransferHost}
-              disabled={hostPending}
-              title={m.lobby_make_host()}
-              aria-label={m.lobby_make_host()}
-              className="w-9 h-9 flex items-center justify-center rounded-lg border-2 bg-[#b8860b] border-[#7c5d0a] shadow-[0px_3px_0px_#7c5d0a] hover:shadow-[0px_1px_0px_#7c5d0a] hover:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+              whileHover={!hostConfirm ? { scale: 1.12, y: -1 } : { scale: 1.05 }}
+              whileTap={{ scale: 0.88 }}
+              onClick={handleHostClick}
+              title={hostConfirm ? m.lobby_confirm_action() : m.lobby_make_host()}
+              aria-label={hostConfirm ? m.lobby_confirm_action() : m.lobby_make_host()}
+              className={[
+                "w-9 h-9 flex items-center justify-center rounded-lg border-2 transition-all cursor-pointer",
+                hostConfirm
+                  ? "bg-[#f59e0b] border-[#b45309] shadow-[0px_3px_0px_#b45309] hover:shadow-[0px_1px_0px_#b45309] hover:translate-y-0.5 animate-pulse"
+                  : "bg-[#b8860b] border-[#7c5d0a] shadow-[0px_3px_0px_#7c5d0a] hover:shadow-[0px_1px_0px_#7c5d0a] hover:translate-y-0.5",
+              ].join(" ")}
             >
-              <img
-                src={bookmarkSrc}
-                alt=""
-                aria-hidden="true"
-                className="w-4 h-auto"
-                style={{ imageRendering: "pixelated" }}
-              />
+              <AnimatePresence mode="wait">
+                {hostConfirm ? (
+                  <motion.span
+                    key="confirm"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.12 }}
+                    className="text-white font-bold text-sm leading-none"
+                  >
+                    ?
+                  </motion.span>
+                ) : (
+                  <motion.img
+                    key="icon"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.12 }}
+                    src={bookmarkSrc}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-4 h-auto"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                )}
+              </AnimatePresence>
             </motion.button>
           )}
           {onKick && (
             <motion.button
-              whileHover={!kickPending ? { scale: 1.12, y: -1 } : {}}
-              whileTap={!kickPending ? { scale: 0.88 } : {}}
-              onClick={handleKick}
-              disabled={kickPending}
-              title={m.lobby_kick()}
-              aria-label={m.lobby_kick()}
-              className="w-9 h-9 flex items-center justify-center rounded-lg border-2 bg-[#dc2626] border-[#991b1b] shadow-[0px_3px_0px_#991b1b] hover:shadow-[0px_1px_0px_#991b1b] hover:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+              whileHover={!kickConfirm ? { scale: 1.12, y: -1 } : { scale: 1.05 }}
+              whileTap={{ scale: 0.88 }}
+              onClick={handleKickClick}
+              title={kickConfirm ? m.lobby_confirm_action() : m.lobby_kick()}
+              aria-label={kickConfirm ? m.lobby_confirm_action() : m.lobby_kick()}
+              className={[
+                "w-9 h-9 flex items-center justify-center rounded-lg border-2 transition-all cursor-pointer",
+                kickConfirm
+                  ? "bg-[#f59e0b] border-[#b45309] shadow-[0px_3px_0px_#b45309] hover:shadow-[0px_1px_0px_#b45309] hover:translate-y-0.5 animate-pulse"
+                  : "bg-[#dc2626] border-[#991b1b] shadow-[0px_3px_0px_#991b1b] hover:shadow-[0px_1px_0px_#991b1b] hover:translate-y-0.5",
+              ].join(" ")}
             >
-              <img
-                src={personCrossedSrc}
-                alt=""
-                aria-hidden="true"
-                className="w-4 h-auto"
-                style={{ imageRendering: "pixelated" }}
-              />
+              <AnimatePresence mode="wait">
+                {kickConfirm ? (
+                  <motion.span
+                    key="confirm"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.12 }}
+                    className="text-white font-bold text-sm leading-none"
+                  >
+                    ?
+                  </motion.span>
+                ) : (
+                  <motion.img
+                    key="icon"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.12 }}
+                    src={personCrossedSrc}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-4 h-auto"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                )}
+              </AnimatePresence>
             </motion.button>
           )}
         </div>

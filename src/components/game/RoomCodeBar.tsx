@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { m } from "../../paraglide/messages.js";
-import { useLocale } from "../../lib/locale.js";
+import { useTranslation } from "../../lib/locale.js";
 
 interface RoomCodeBarProps {
   code: string;
@@ -21,7 +20,7 @@ async function copyToClipboard(text: string): Promise<void> {
 }
 
 export function RoomCodeBar({ code }: RoomCodeBarProps) {
-  useLocale();
+  const m = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {

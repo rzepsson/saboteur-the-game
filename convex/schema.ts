@@ -5,12 +5,14 @@ export default defineSchema({
   rooms: defineTable({
     code: v.string(),
     hostSessionId: v.string(),
-    status: v.union(v.literal("waiting"), v.literal("starting"), v.literal("playing")),
+    // M3: removed "starting" — it was never set anywhere; re-add when startGame is implemented
+    status: v.union(v.literal("waiting"), v.literal("playing")),
+    // L1: all settings required — create() always sets them, no need for double defaults
     settings: v.object({
       maxPlayers: v.number(),
-      numberOfRounds: v.optional(v.number()),
-      turnTimeLimitSeconds: v.optional(v.number()),
-      enableBrokenToolPenalty: v.optional(v.boolean()),
+      numberOfRounds: v.number(),
+      turnTimeLimitSeconds: v.number(),
+      enableBrokenToolPenalty: v.boolean(),
     }),
   }).index("by_code", ["code"]),
 

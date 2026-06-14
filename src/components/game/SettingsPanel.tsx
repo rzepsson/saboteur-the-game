@@ -2,12 +2,9 @@ import { useMutation } from "convex/react";
 import { motion } from "framer-motion";
 import { api } from "../../../convex/_generated/api.js";
 import { StepperRow } from "../ui/StepperRow.js";
-import { m } from "../../paraglide/messages.js";
-import { useLocale } from "../../lib/locale.js";
-import { resolveSettings } from "../../types/game.js";
+import { useTranslation } from "../../lib/locale.js";
+import { GAME_RULES } from "../../lib/gameRules.js";
 import type { Room, RoomSettings } from "../../types/game.js";
-
-const TURN_TIME_OPTIONS: number[] = [30, 60, 90, 120];
 
 interface SettingsPanelProps {
   room: Room;
@@ -16,17 +13,19 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ room, isHost, sessionId }: SettingsPanelProps) {
-  useLocale();
+  const m = useTranslation();
   const updateSettings = useMutation(api.rooms.updateSettings);
-  const resolved = resolveSettings(room.settings);
-  const { maxPlayers, numberOfRounds, turnTimeLimitSeconds, enableBrokenToolPenalty } = resolved;
+
+  // L1: settings are always fully defined (schema is non-optional), no resolveSettings needed
+  const { maxPlayers, numberOfRounds, turnTimeLimitSeconds, enableBrokenToolPenalty } =
+    room.settings;
   const playerCount = room.players.length;
 
-  const update = (partial: Partial<Required<RoomSettings>>) => {
+  const update = (partial: Partial<RoomSettings>) => {
     void updateSettings({
       sessionId,
       roomId: room._id,
-      settings: { ...resolved, ...partial },
+      settings: { ...room.settings, ...partial },
     });
   };
 
@@ -42,8 +41,8 @@ export function SettingsPanel({ room, isHost, sessionId }: SettingsPanelProps) {
         <StepperRow
           label={m.lobby_max_players_label()}
           value={maxPlayers}
-          min={Math.max(3, playerCount)}
-          max={10}
+          min={Math.max(GAME_RULES.minPlayers, playerCount)}
+          max={GAME_RULES.maxPlayers}
           disabled={!isHost}
           onChange={(next) => update({ maxPlayers: next })}
         />
@@ -51,8 +50,8 @@ export function SettingsPanel({ room, isHost, sessionId }: SettingsPanelProps) {
         <StepperRow
           label={m.lobby_rounds_label()}
           value={numberOfRounds}
-          min={1}
-          max={3}
+          min={GAME_RULES.minRounds}
+          max={GAME_RULES.maxRounds}
           disabled={!isHost}
           onChange={(next) => update({ numberOfRounds: next })}
         />
@@ -60,7 +59,7 @@ export function SettingsPanel({ room, isHost, sessionId }: SettingsPanelProps) {
         <div className="flex flex-col gap-1.5">
           <span className="text-[#5a360a] font-bold text-xl">{m.lobby_turn_time_label()}</span>
           <div className="flex flex-wrap gap-2">
-            {TURN_TIME_OPTIONS.map((val) => {
+            {GAME_RULES.validTurnTimes.map((val) => {
               const active = turnTimeLimitSeconds === val;
               return (
                 <motion.button

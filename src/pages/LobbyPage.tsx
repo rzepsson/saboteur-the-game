@@ -3,35 +3,38 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../../convex/_generated/api.js";
+import type { Id } from "../../convex/_generated/dataModel.js";
 import { PlayerCard } from "../components/game/PlayerCard.js";
 import { RoomCodeBar } from "../components/game/RoomCodeBar.js";
 import { SettingsPanel } from "../components/game/SettingsPanel.js";
-import { m } from "../paraglide/messages.js";
-import { useLocale } from "../lib/locale.js";
+import { useTranslation } from "../lib/locale.js";
 import { getSessionId } from "../lib/session.js";
-import type { Room } from "../types/game.js";
 import playSrc from "../assets/icons/Play.svg";
 import exitSrc from "../assets/icons/Exit.svg";
 
 const HEARTBEAT_INTERVAL_MS = 10_000;
 
 export default function LobbyPage() {
-  useLocale();
+  const m = useTranslation();
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const sessionId = useRef(getSessionId()).current;
 
-  const room = useQuery(api.rooms.get, { code: code ?? "" }) as Room | null | undefined;
+  // M2: no cast — Convex infers the return type directly from the query definition
+  const room = useQuery(api.rooms.get, { code: code ?? "" });
+  // C1 fix: getMyPlayer returns only our own identity — sessionId stays on the client,
+  // never broadcast to other subscribers via the get query
+  const myPlayer = useQuery(api.rooms.getMyPlayer, { code: code ?? "", sessionId });
+
   const leaveRoom = useMutation(api.rooms.leave);
   const sendHeartbeat = useMutation(api.rooms.heartbeat);
   const kickPlayer = useMutation(api.rooms.kickPlayer);
   const transferHost = useMutation(api.rooms.transferHost);
 
-  const [kickingPlayer, setKickingPlayer] = useState<string | null>(null);
-  const [transferringTo, setTransferringTo] = useState<string | null>(null);
+  const [kickingPlayer, setKickingPlayer] = useState<Id<"players"> | null>(null);
+  const [transferringTo, setTransferringTo] = useState<Id<"players"> | null>(null);
 
-  const self = room?.players.find((p) => p.sessionId === sessionId) ?? null;
-  const isHost = self?.isHost ?? false;
+  const isHost = myPlayer?.isHost ?? false;
   const playerCount = room?.players.length ?? 0;
   const canStart = isHost && playerCount >= 3;
   const roomId = room?._id;
@@ -39,23 +42,24 @@ export default function LobbyPage() {
   /* Track if the user was ever in this room (to distinguish link visits from kicks) */
   const wasEverInRoom = useRef(false);
   useEffect(() => {
-    if (self !== null) {
+    if (myPlayer !== undefined && myPlayer !== null) {
       wasEverInRoom.current = true;
     }
-  }, [self]);
+  }, [myPlayer]);
 
   /* Redirect when player is absent from the room:
    * - never was here (direct link visit) → send to join form with pre-filled code
    * - was here but disappeared (kicked / host cleanup) → send to home */
   useEffect(() => {
     if (room === undefined || room === null) return;
-    if (self !== null) return;
+    if (myPlayer === undefined) return; // still loading identity
+    if (myPlayer !== null) return; // still in room
     if (wasEverInRoom.current) {
       void navigate("/", { replace: true });
     } else {
       void navigate(`/?code=${room.code}`, { replace: true });
     }
-  }, [room, self, navigate]);
+  }, [room, myPlayer, navigate]);
 
   /* Periodic keep-alive — cron removes players after 45 s of silence */
   useEffect(() => {
@@ -73,18 +77,19 @@ export default function LobbyPage() {
     void navigate("/");
   };
 
-  const handleKick = (targetSessionId: string) => {
+  // C1 fix: target identified by document _id, not sessionId
+  const handleKick = (targetPlayerId: Id<"players">) => {
     if (!room || kickingPlayer) return;
-    setKickingPlayer(targetSessionId);
-    kickPlayer({ sessionId, roomId: room._id, targetSessionId })
+    setKickingPlayer(targetPlayerId);
+    kickPlayer({ sessionId, roomId: room._id, targetPlayerId })
       .catch(console.error)
       .finally(() => setKickingPlayer(null));
   };
 
-  const handleTransferHost = (targetSessionId: string) => {
+  const handleTransferHost = (targetPlayerId: Id<"players">) => {
     if (!room || transferringTo) return;
-    setTransferringTo(targetSessionId);
-    transferHost({ sessionId, roomId: room._id, targetSessionId })
+    setTransferringTo(targetPlayerId);
+    transferHost({ sessionId, roomId: room._id, targetPlayerId })
       .catch(console.error)
       .finally(() => setTransferringTo(null));
   };
@@ -169,9 +174,9 @@ export default function LobbyPage() {
           <div className="p-3 sm:p-4 flex flex-col gap-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:custom-scroll">
             <AnimatePresence>
               {room.players.map((player) => {
-                const isSelf = player.sessionId === sessionId;
-                const isBeingKicked = kickingPlayer === player.sessionId;
-                const isReceivingHost = transferringTo === player.sessionId;
+                const isSelf = player._id === myPlayer?._id;
+                const isBeingKicked = kickingPlayer === player._id;
+                const isReceivingHost = transferringTo === player._id;
                 return (
                   <PlayerCard
                     key={player._id}
@@ -179,12 +184,12 @@ export default function LobbyPage() {
                     isSelf={isSelf}
                     onKick={
                       isHost && !isSelf && !isBeingKicked
-                        ? () => handleKick(player.sessionId)
+                        ? () => handleKick(player._id)
                         : undefined
                     }
                     onTransferHost={
                       isHost && !isSelf && !isReceivingHost
-                        ? () => handleTransferHost(player.sessionId)
+                        ? () => handleTransferHost(player._id)
                         : undefined
                     }
                   />

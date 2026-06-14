@@ -3,9 +3,9 @@ import GamePanel from "../components/GamePanel.js";
 import HowToPlayPanel from "../components/HowToPlayPanel.js";
 import Footer from "../components/Footer.js";
 import { SaboteurLogo } from "../components/game/SaboteurLogo.js";
-import { useLocale } from "../lib/locale.js";
+import { useTranslation } from "../lib/locale.js";
 export default function HomePage() {
-  useLocale();
+  useTranslation(); // subscribes to locale changes so child m.*() calls re-render
 
   return (
     <div className="relative min-h-svh lg:h-svh flex flex-col items-center justify-between px-3 sm:px-4 pt-6 sm:pt-8 pb-4 sm:pb-6 gap-4 sm:gap-6 lg:overflow-hidden">

@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
-import { m } from "../paraglide/messages.js";
-import { useLocale } from "../lib/locale.js";
+import { useTranslation } from "../lib/locale.js";
 import { useLobbyStore } from "../store/lobbyStore.js";
 import { getSessionId } from "../lib/session.js";
 import { AvatarPicker } from "./game/AvatarPicker.js";
@@ -18,11 +17,11 @@ function errorToMessage(err: unknown): string {
     if (msg.includes("ROOM_FULL")) return m.panel_error_full();
     if (msg.includes("GAME_ALREADY_STARTED")) return m.panel_error_started();
   }
-  return "An unexpected error occurred.";
+  return m.panel_error_generic();
 }
 
 export default function GamePanel() {
-  useLocale();
+  const m = useTranslation();
   const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
