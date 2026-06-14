@@ -22,7 +22,7 @@ export function AvatarPicker({ avatarId, onChange }: AvatarPickerProps) {
         {"<"}
       </motion.button>
 
-      <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center bg-[#c69c6d] border-4 border-[#5a360a] rounded-lg shadow-[inset_0_4px_0_rgba(0,0,0,0.15)] shrink-0 overflow-hidden">
+      <div className="w-20 h-20 sm:w-24 sm:h-24 relative flex items-center justify-center bg-[#c69c6d] border-4 border-[#5a360a] rounded-lg shadow-[inset_0_4px_0_rgba(0,0,0,0.15)] shrink-0 overflow-hidden">
         <AnimatePresence mode="popLayout">
           <motion.img
             key={avatarId}

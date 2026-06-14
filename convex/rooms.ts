@@ -251,6 +251,66 @@ export const get = query({
   },
 });
 
+export const kickPlayer = mutation({
+  args: {
+    sessionId: v.string(),
+    roomId: v.id("rooms"),
+    targetSessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("ROOM_NOT_FOUND");
+    if (room.hostSessionId !== args.sessionId) throw new Error("NOT_HOST");
+
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_roomId_and_sessionId", (q) =>
+        q.eq("roomId", args.roomId).eq("sessionId", args.targetSessionId),
+      )
+      .unique();
+
+    if (!player || player.isHost) return;
+    await ctx.db.delete(player._id);
+  },
+});
+
+export const transferHost = mutation({
+  args: {
+    sessionId: v.string(),
+    roomId: v.id("rooms"),
+    targetSessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.targetSessionId === args.sessionId) throw new Error("CANNOT_TRANSFER_TO_SELF");
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("ROOM_NOT_FOUND");
+    if (room.hostSessionId !== args.sessionId) throw new Error("NOT_HOST");
+
+    const currentHost = await ctx.db
+      .query("players")
+      .withIndex("by_roomId_and_sessionId", (q) =>
+        q.eq("roomId", args.roomId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+
+    if (currentHost) {
+      await ctx.db.patch(currentHost._id, { isHost: false });
+    }
+
+    const target = await ctx.db
+      .query("players")
+      .withIndex("by_roomId_and_sessionId", (q) =>
+        q.eq("roomId", args.roomId).eq("sessionId", args.targetSessionId),
+      )
+      .unique();
+
+    if (!target) throw new Error("PLAYER_NOT_FOUND");
+
+    await ctx.db.patch(target._id, { isHost: true });
+    await ctx.db.patch(args.roomId, { hostSessionId: args.targetSessionId });
+  },
+});
+
 export const cleanupInactivePlayers = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -271,7 +331,7 @@ export const cleanupInactivePlayers = internalMutation({
       const remaining = await ctx.db
         .query("players")
         .withIndex("by_roomId", (q) => q.eq("roomId", roomId))
-        .take(1);
+        .take(10);
 
       if (remaining.length === 0) {
         const room = await ctx.db.get(roomId);

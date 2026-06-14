@@ -1,16 +1,40 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { m } from "../../paraglide/messages.js";
 import { useLocale } from "../../lib/locale.js";
 import { getAvatarUrl } from "../../lib/avatar.js";
 import type { Player } from "../../types/game.js";
+import bookmarkSrc from "../../assets/icons/Bookmark.svg";
+import personCrossedSrc from "../../assets/icons/Person-Crossed.svg";
 
 interface PlayerCardProps {
   player: Player;
   isSelf: boolean;
+  onKick?: () => void;
+  onTransferHost?: () => void;
 }
 
-export function PlayerCard({ player, isSelf }: PlayerCardProps) {
+export function PlayerCard({ player, isSelf, onKick, onTransferHost }: PlayerCardProps) {
   useLocale();
+  const [kickPending, setKickPending] = useState(false);
+  const [hostPending, setHostPending] = useState(false);
+  const showActions = !isSelf && (onKick ?? onTransferHost);
+
+  const handleKick = () => {
+    if (kickPending || !onKick) return;
+    setKickPending(true);
+    onKick();
+    // Safety reset — card unmounts on success, this fires only if mutation fails
+    setTimeout(() => setKickPending(false), 3000);
+  };
+
+  const handleTransferHost = () => {
+    if (hostPending || !onTransferHost) return;
+    setHostPending(true);
+    onTransferHost();
+    setTimeout(() => setHostPending(false), 3000);
+  };
+
   return (
     <motion.div
       layout
@@ -50,6 +74,49 @@ export function PlayerCard({ player, isSelf }: PlayerCardProps) {
           )}
         </div>
       </div>
+
+      {showActions && (
+        <div className="flex flex-col gap-2 shrink-0">
+          {onTransferHost && (
+            <motion.button
+              whileHover={!hostPending ? { scale: 1.12, y: -1 } : {}}
+              whileTap={!hostPending ? { scale: 0.88 } : {}}
+              onClick={handleTransferHost}
+              disabled={hostPending}
+              title={m.lobby_make_host()}
+              aria-label={m.lobby_make_host()}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border-2 bg-[#b8860b] border-[#7c5d0a] shadow-[0px_3px_0px_#7c5d0a] hover:shadow-[0px_1px_0px_#7c5d0a] hover:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
+              <img
+                src={bookmarkSrc}
+                alt=""
+                aria-hidden="true"
+                className="w-4 h-auto"
+                style={{ imageRendering: "pixelated" }}
+              />
+            </motion.button>
+          )}
+          {onKick && (
+            <motion.button
+              whileHover={!kickPending ? { scale: 1.12, y: -1 } : {}}
+              whileTap={!kickPending ? { scale: 0.88 } : {}}
+              onClick={handleKick}
+              disabled={kickPending}
+              title={m.lobby_kick()}
+              aria-label={m.lobby_kick()}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border-2 bg-[#dc2626] border-[#991b1b] shadow-[0px_3px_0px_#991b1b] hover:shadow-[0px_1px_0px_#991b1b] hover:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
+              <img
+                src={personCrossedSrc}
+                alt=""
+                aria-hidden="true"
+                className="w-4 h-auto"
+                style={{ imageRendering: "pixelated" }}
+              />
+            </motion.button>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
 import { m } from "../paraglide/messages.js";
@@ -25,9 +25,12 @@ export default function GamePanel() {
   useLocale();
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
+  const initialCode = (searchParams.get("code") ?? "").toUpperCase();
+
   const { nickname, avatarId, setNickname, setAvatarId } = useLobbyStore();
-  const [tab, setTab] = useState<Tab>("create");
-  const [code, setCode] = useState("");
+  const [tab, setTab] = useState<Tab>(initialCode ? "join" : "create");
+  const [code, setCode] = useState(initialCode);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 

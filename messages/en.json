@@ -38,7 +38,7 @@
   "lobby_host_only_hint": "Only the host can change settings.",
   "lobby_setting_on": "ON",
   "lobby_setting_off": "OFF",
-  "lobby_start_button": "Start game!",
+  "lobby_start_button": "Start game",
   "lobby_waiting_label": "Waiting for host...",
   "lobby_leave_button": "Leave",
   "lobby_you_badge": "YOU",
@@ -47,5 +47,7 @@
   "lobby_not_found_title": "Room not found",
   "lobby_return_home": "Return home",
   "lobby_loading": "Loading...",
-  "lobby_disconnected": "You left this room"
+  "lobby_disconnected": "You left this room",
+  "lobby_kick": "Kick",
+  "lobby_make_host": "Make host"
 }

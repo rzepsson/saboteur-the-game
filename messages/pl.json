@@ -38,7 +38,7 @@
   "lobby_host_only_hint": "Tylko host może zmieniać ustawienia.",
   "lobby_setting_on": "WŁ",
   "lobby_setting_off": "WYŁ",
-  "lobby_start_button": "Zacznij grę!",
+  "lobby_start_button": "Zacznij grę",
   "lobby_waiting_label": "Czekamy na hosta...",
   "lobby_leave_button": "Opuść",
   "lobby_you_badge": "TY",
@@ -47,5 +47,7 @@
   "lobby_not_found_title": "Pokój nie istnieje",
   "lobby_return_home": "Wróć do strony głównej",
   "lobby_loading": "Ładowanie...",
-  "lobby_disconnected": "Opuściłeś ten pokój"
+  "lobby_disconnected": "Opuściłeś ten pokój",
+  "lobby_kick": "Wyrzuć",
+  "lobby_make_host": "Daj hosta"
 }
