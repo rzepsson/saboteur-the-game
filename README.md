@@ -51,14 +51,6 @@ No keys, no seed data, no sign-up. Open two tabs, create a room in one, paste th
 - **Rounds and gold** - up to three rounds, nuggets dealt from a deck that shrinks across the whole game, and the saboteurs' payout scales with how many of them there were.
 - **Two languages** - en/pl through Paraglide, which compiles each message into a function, so unused translations get tree-shaken instead of shipped.
 
-## A couple of decisions
-
-**The rules don't know Convex exists.** `gameLogic.ts` and `gameData.ts` import nothing from the backend - just geometry, reachability and card counts. That leaves the interesting half of the game testable with plain Vitest, and the mutation around it is mostly persistence.
-
-**The client decides nothing.** Every move goes through one `playCard` mutation that rebuilds the board from the database and validates from scratch. The green cells in the screenshot are only the app being helpful: it highlights every empty neighbour, not every legal move, and the server still throws out anything whose edges don't line up.
-
-**Every move ends the same way.** `finalizeMove` draws a replacement card, advances the turn, checks whether the round ended and reschedules the timer. Adding a new action card means writing what it does, not re-remembering the six things that happen afterwards.
-
 ## Tests
 
 ```bash

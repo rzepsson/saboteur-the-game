@@ -51,14 +51,6 @@ Bez kluczy, bez danych startowych, bez rejestracji. Otwierasz dwie karty, w jedn
 - **Rundy i złoto** - do trzech rund, bryłki z talii, która kurczy się przez całą grę, a wypłata sabotażystów zależy od tego, ilu ich było.
 - **Dwa języki** - en/pl przez Paraglide, które kompiluje każdy komunikat do funkcji, więc nieużywane tłumaczenia wypadają przy buildzie zamiast lecieć do przeglądarki.
 
-## Parę decyzji
-
-**Zasady nie wiedzą o istnieniu Convexa.** `gameLogic.ts` i `gameData.ts` nie importują nic z backendu - sama geometria, osiągalność i liczby kart. Dzięki temu ciekawsza połowa gry testuje się zwykłym Vitestem, a mutacja dookoła to głównie zapis do bazy.
-
-**Klient o niczym nie decyduje.** Każdy ruch idzie przez jedną mutację `playCard`, która odbudowuje planszę z bazy i waliduje od zera. Zielone pola na zrzucie to tylko uprzejmość aplikacji: podświetla każde puste sąsiednie pole, a nie każdy legalny ruch, i serwer dalej odrzuca wszystko, czego krawędzie się nie zgadzają.
-
-**Każdy ruch kończy się tak samo.** `finalizeMove` dobiera kartę, przesuwa turę, sprawdza koniec rundy i planuje kolejny timer. Dodanie nowej karty akcji to napisanie, co ona robi, a nie przypominanie sobie sześciu rzeczy, które dzieją się potem.
-
 ## Testy
 
 ```bash
