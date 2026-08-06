@@ -7,6 +7,7 @@
     "dev": "vp dev",
     "build": "tsc -b && vp build",
     "lint": "eslint .",
+    "shots": "node scripts/screenshots.mjs",
     "preview": "vp preview",
     "prepare": "vp config"
   },
@@ -32,10 +33,12 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "playwright": "^1.62.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vite-plus": "latest"
+    "vite-plus": "latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",

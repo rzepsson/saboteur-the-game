@@ -30,9 +30,11 @@ export default function LobbyPage() {
   const sendHeartbeat = useMutation(api.rooms.heartbeat);
   const kickPlayer = useMutation(api.rooms.kickPlayer);
   const transferHost = useMutation(api.rooms.transferHost);
+  const startGame = useMutation(api.games.startGame);
 
   const [kickingPlayer, setKickingPlayer] = useState<Id<"players"> | null>(null);
   const [transferringTo, setTransferringTo] = useState<Id<"players"> | null>(null);
+  const [starting, setStarting] = useState(false);
 
   const isHost = myPlayer?.isHost ?? false;
   const playerCount = room?.players.length ?? 0;
@@ -69,6 +71,21 @@ export default function LobbyPage() {
     }, HEARTBEAT_INTERVAL_MS);
     return () => clearInterval(id);
   }, [roomId, sendHeartbeat, sessionId]);
+
+  /* When the host starts the game, every client moves to the game page */
+  useEffect(() => {
+    if (room && room.status === "playing") {
+      void navigate(`/game/${room.code}`, { replace: true });
+    }
+  }, [room, navigate]);
+
+  const handleStart = () => {
+    if (!canStart || starting) return;
+    setStarting(true);
+    startGame({ sessionId, code: room?.code ?? "" })
+      .catch(console.error)
+      .finally(() => setStarting(false));
+  };
 
   const handleLeave = async () => {
     if (room) {
@@ -183,9 +200,7 @@ export default function LobbyPage() {
                     player={player}
                     isSelf={isSelf}
                     onKick={
-                      isHost && !isSelf && !isBeingKicked
-                        ? () => handleKick(player._id)
-                        : undefined
+                      isHost && !isSelf && !isBeingKicked ? () => handleKick(player._id) : undefined
                     }
                     onTransferHost={
                       isHost && !isSelf && !isReceivingHost
@@ -221,10 +236,11 @@ export default function LobbyPage() {
                     canStart ? { y: -2, boxShadow: "0px 8px 0px #166534", scale: 1.01 } : {}
                   }
                   whileTap={canStart ? { y: 6, boxShadow: "0px 0px 0px #166534", scale: 0.98 } : {}}
-                  disabled={!canStart}
+                  disabled={!canStart || starting}
+                  onClick={handleStart}
                   className="w-full py-4 sm:py-5 uppercase tracking-[0.15em] cursor-pointer flex items-center justify-center gap-3 text-white font-bold text-2xl sm:text-3xl rounded-xl bg-[#22c55e] border-4 border-[#14532d] disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                 >
-                  {m.lobby_start_button()}
+                  {starting ? m.game_starting() : m.lobby_start_button()}
                   <img
                     src={playSrc}
                     alt=""
