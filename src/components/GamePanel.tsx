@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
 import { useTranslation } from "../lib/locale.js";
+import * as messages from "../paraglide/messages.js";
 import { useLobbyStore } from "../store/lobbyStore.js";
 import { getSessionId } from "../lib/session.js";
 import { AvatarPicker } from "./game/AvatarPicker.js";
@@ -13,11 +14,11 @@ type Tab = "create" | "join";
 function errorToMessage(err: unknown): string {
   if (err instanceof Error) {
     const msg = err.message;
-    if (msg.includes("ROOM_NOT_FOUND")) return m.panel_error_not_found();
-    if (msg.includes("ROOM_FULL")) return m.panel_error_full();
-    if (msg.includes("GAME_ALREADY_STARTED")) return m.panel_error_started();
+    if (msg.includes("ROOM_NOT_FOUND")) return messages.panel_error_not_found();
+    if (msg.includes("ROOM_FULL")) return messages.panel_error_full();
+    if (msg.includes("GAME_ALREADY_STARTED")) return messages.panel_error_started();
   }
-  return m.panel_error_generic();
+  return messages.panel_error_generic();
 }
 
 export default function GamePanel() {
